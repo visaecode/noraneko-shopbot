@@ -25,7 +25,7 @@ bot = commands.Bot(
 async def load_extension():
 
     await bot.load_extension("cogs.queue")
-    await bot.load_extension("cogs.welcome")
+    # await bot.load_extension("cogs.welcome")
     # await bot.load_extension("cogs.tickets")
 
 @bot.event
@@ -40,7 +40,7 @@ async def on_ready():
 async def main():
     async with bot:
 
-        await load_extensions()
+        await load_extension()
 
         await bot.start(TOKEN)
 
