@@ -25,7 +25,7 @@ bot = commands.Bot(
 async def load_extension():
 
     await bot.load_extension("cogs.queue")
-    # await bot.load_extension("cogs.welcome")
+    await bot.load_extension("cogs.status")
     # await bot.load_extension("cogs.tickets")
 
 @bot.event
