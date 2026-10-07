@@ -1,7 +1,9 @@
+
 import os
+import re
+import asyncio
 
 import discord
-
 from discord.ext import commands
 from discord import app_commands
 from dotenv import load_dotenv
@@ -18,111 +20,259 @@ load_dotenv()
 # CONFIG
 # ==========================================
 
-QUEUE_CHANNEL_ID = int(os.getenv("QUEUE_CHANNEL_ID"))
-
-NOTED_CATEGORY_ID = int(os.getenv("NOTED_CATEGORY_ID"))
-PROCESSING_CATEGORY_ID = int(os.getenv("PROCESSING_CATEGORY_ID"))
-COMPLETED_CATEGORY_ID = int(os.getenv("COMPLETED_CATEGORY_ID"))
-CANCELLED_CATEGORY_ID = int(os.getenv("CANCELLED_CATEGORY_ID"))
-
-
-# ==========================================
-# EMOJIS
-# ==========================================
-
-EMOJI_PROCESSING = discord.PartialEmoji(
-    name="00001",
-    id=1517079490352775239
+QUEUE_CHANNEL_ID = int(
+    os.getenv("QUEUE_CHANNEL_ID", 0)
 )
 
-EMOJI_COMPLETED = discord.PartialEmoji(
-    name="00002",
-    id=1517079538415439963
+NOTED_CATEGORY_ID = int(
+    os.getenv("NOTED_CATEGORY_ID", 0)
 )
 
-EMOJI_CANCELLED = discord.PartialEmoji(
-    name="00003",
-    id=1517079582522474608
+PROCESSING_CATEGORY_ID = int(
+    os.getenv("PROCESSING_CATEGORY_ID", 0)
+)
+
+COMPLETED_CATEGORY_ID = int(
+    os.getenv("COMPLETED_CATEGORY_ID", 0)
+)
+
+CANCELLED_CATEGORY_ID = int(
+    os.getenv("CANCELLED_CATEGORY_ID", 0)
+)
+
+# ==========================================
+# STAFF ROLE
+# ==========================================
+
+STAFF_ROLE_ID = int(
+    os.getenv("STAFF_ROLE_ID", 0)
 )
 
 
 # ==========================================
-# STATUS CONFIG
+# CONSTANTS
 # ==========================================
 
-STATUS_CONFIG = {
-
-    "processing": {
-
-        "category_id": PROCESSING_CATEGORY_ID,
-
-        "message": (
-            "_ _\n\n"
-
-            "_ _      <a:002_PixelSprout:1531673663600853113>     ~~                      ~~     "
-            "<a:ise_a2:1531670472155070465>    ~~                      ~~   "
-            "<a:004_2_carrot:1531669152199213269>\n"
-
-            "_ _   **noted                     processing               completed**\n\n"
-
-            "_ _       your  order  is being processed. no refund once\n"
-            "_ _ we're processing your order. do not ping the staffs\n"
-            "_ _ for the mean time. the force refund cost : `P30.00`\n"
-
-            ">   pings   :     <@&1412724532623441941>  "
-            "<@&1442868959245504735> <@&1412762016753516614>\n\n"
-
-            "_ _"
-        )
-    },
-
-    "completed": {
-
-        "category_id": COMPLETED_CATEGORY_ID,
-
-        "message": (
-            "_ _\n\n"
-
-            "_ _      <a:002_PixelSprout:1531673663600853113>     ~~                      ~~     "
-            "<a:002_PixelSprout:1531673663600853113>     ~~                      ~~   "
-            "<a:ise_a2:1531670472155070465>\n"
-
-            "_ _   **noted                     processing               completed**\n\n"
-
-            "_ _       your  order  is now completed. please do check\n"
-            "_ _ and confirm if you received the item. do not forget\n"
-
-            "_ _ to [vouch](https://discord.com/channels/1412690271296163963/1444005812828901498). "
-            "no vouch / incorrect vouch = no warranty\n"
-
-            ">   pings   :     <@&1412724532623441941>  "
-            "<@&1442868959245504735> <@&1412762016753516614>\n\n"
-
-            "_ _"
-        )
-    },
-
-    "cancelled": {
-
-        "category_id": CANCELLED_CATEGORY_ID,
-
-        "message": (
-            "_ _\n\n"
-
-            "_ _                           **order is cancelled**      "
-            "<a:ise_a1:1531670435635265617>\n\n"
-
-            "_ _       order is cancelled due to circumstances. please\n"
-            "_ _       wait for staff to refund your payment and prepare\n"
-            "_ _       force refund fee : `P30.00` upfront    thank you sm!\n"
-
-            ">   pings   :     <@&1412724532623441941>  "
-            "<@&1442868959245504735> <@&1412762016753516614>\n\n"
-
-            "_ _"
-        )
-    }
+STATUS_TEXT = {
+    "processing": "PROCESSING",
+    "completed": "COMPLETED",
+    "cancelled": "CANCELLED",
 }
+
+
+CATEGORY_IDS = {
+    "noted": NOTED_CATEGORY_ID,
+    "processing": PROCESSING_CATEGORY_ID,
+    "completed": COMPLETED_CATEGORY_ID,
+    "cancelled": CANCELLED_CATEGORY_ID,
+}
+
+
+# ==========================================
+# STATUS MESSAGES
+# ==========================================
+
+STATUS_MESSAGES = {
+
+    "processing": (
+        "_ _\n"
+        "            <a:002_PixelSprout:1531673663600853113>     ~~                     ~~   <a:ise_a2:1531670472155070465>    ~~                     ~~   <a:004_2_carrot:1531669152199213269> \n"
+        "         noted                   processing             completed\n"
+        "\n"
+        "_ _         your [order](https://discord.com/channels/1412690271296163963/1551245952063377408) is being processed. no refunds\n"
+        "_ _         once we're processing your order. thank uu\n"
+        "_ _         for more [inquiries](https://discord.com/channels/1412690271296163963/1444282982746554378) ping the <@&1442868959245504735> and\n"
+        "_ _         wait for our response.\n"
+        "\n"
+        "_ _"
+    ),
+
+    "completed": (
+        "_ _\n"
+        "            <a:002_PixelSprout:1531673663600853113>     ~~                     ~~   <a:002_PixelSprout:1531673663600853113>     ~~                     ~~   <a:ise_a2:1531670472155070465>  \n"
+        "         noted                   processing             completed\n"
+        "\n"
+        "_ _         kiwi delivered your order! <@&1412724532623441941> kindly\n"
+        "_ _         [vouch](https://discord.com/channels/1412690271296163963/1444005812828901498) us and also leave a [feedback](https://discord.com/channels/1412690271296163963/1522878467979477032) here. ty\n"
+        "_ _         for ordering @ noraneko ! see u in your next\n"
+        "_ _         purchase.\n"
+        "\n"
+        "_ _"
+    ),
+
+    "cancelled": (
+        "_ _\n"
+        "_ _            order is cancelled.  <a:66cdf480:1531685109055361064>\n"
+        "_ _"
+    ),
+}
+
+
+# ==========================================
+# GET CATEGORY
+# ==========================================
+
+async def get_category(
+    bot: commands.Bot,
+    category_id: int
+):
+    """
+    Get category from cache first.
+    Only call Discord API if it isn't cached.
+    """
+
+    if not category_id:
+
+        return None, (
+            "Category ID is not configured.\n"
+            f"ID: `{category_id}`"
+        )
+
+    category = bot.get_channel(category_id)
+
+    if category is None:
+
+        try:
+
+            category = await bot.fetch_channel(
+                category_id
+            )
+
+        except discord.NotFound:
+
+            return None, (
+                "Category does not exist.\n"
+                f"ID: `{category_id}`"
+            )
+
+        except discord.Forbidden:
+
+            return None, (
+                "I don't have permission to "
+                "access that category."
+            )
+
+        except discord.HTTPException as e:
+
+            return None, (
+                "Failed to access category:\n"
+                f"`{e}`"
+            )
+
+    if not isinstance(
+        category,
+        discord.CategoryChannel
+    ):
+
+        return None, (
+            f"`{category_id}` is not a category."
+        )
+
+    return category, None
+
+
+# ==========================================
+# GET TEXT CHANNEL
+# ==========================================
+
+async def get_text_channel(
+    bot: commands.Bot,
+    channel_id: int
+):
+    """
+    Cache-first text channel lookup.
+    """
+
+    if not channel_id:
+
+        return None, (
+            "Channel ID is not configured."
+        )
+
+    channel = bot.get_channel(channel_id)
+
+    if channel is not None:
+
+        if isinstance(
+            channel,
+            discord.TextChannel
+        ):
+
+            return channel, None
+
+        return None, (
+            f"`{channel_id}` is not a text channel."
+        )
+
+    try:
+
+        channel = await bot.fetch_channel(
+            channel_id
+        )
+
+    except discord.NotFound:
+
+        return None, (
+            "The channel no longer exists."
+        )
+
+    except discord.Forbidden:
+
+        return None, (
+            "I don't have permission to access "
+            "that channel."
+        )
+
+    except discord.HTTPException as e:
+
+        return None, (
+            "Discord API error:\n"
+            f"`{e}`"
+        )
+
+    if not isinstance(
+        channel,
+        discord.TextChannel
+    ):
+
+        return None, (
+            "The channel is not a text channel."
+        )
+
+    return channel, None
+
+
+# ==========================================
+# STAFF CHECK
+# ==========================================
+
+def is_staff(
+    member: discord.Member
+) -> bool:
+    """
+    Returns True when the user is:
+    - Server owner
+    - Administrator
+    - Has the configured staff role
+    """
+
+    # Server owner
+    if member.guild.owner_id == member.id:
+        return True
+
+    # Administrator
+    if member.guild_permissions.administrator:
+        return True
+
+    # Staff role
+    if STAFF_ROLE_ID:
+
+        return any(
+            role.id == STAFF_ROLE_ID
+            for role in member.roles
+        )
+
+    return False
 
 
 # ==========================================
@@ -130,100 +280,60 @@ STATUS_CONFIG = {
 # ==========================================
 
 async def move_ticket_channel(
-    bot,
-    ticket,
-    status,
-    quantity,
-    item
+    bot: commands.Bot,
+    ticket: discord.TextChannel,
+    status: str,
+    quantity: str,
+    item: str
 ):
 
-    config = STATUS_CONFIG.get(status)
+    category_id = CATEGORY_IDS.get(
+        status
+    )
 
-    if config is None:
-        return False, "Invalid status."
+    if not category_id:
 
-    # ======================================
-    # CHANNEL NAME
-    # ======================================
+        return False, (
+            f"No category configured for "
+            f"`{status}`."
+        )
 
-    channel_name = f"{status}．{quantity}．{item}"
-
-
-    # ======================================
-    # GET CATEGORY
-    # ======================================
-
-    category = bot.get_channel(
-        config["category_id"]
+    category, error = await get_category(
+        bot,
+        category_id
     )
 
     if category is None:
 
-        try:
+        return False, error
 
-            category = await bot.fetch_channel(
-                config["category_id"]
-            )
-
-        except discord.NotFound:
-
-            return False, (
-                f"Category does not exist.\n"
-                f"ID: `{config['category_id']}`"
-            )
-
-        except discord.Forbidden:
-
-            return False, (
-                "I don't have permission to "
-                "access that category."
-            )
-
-        except discord.HTTPException as e:
-
-            return False, (
-                f"Failed to access category: `{e}`"
-            )
-
-
-    # ======================================
-    # CHECK CATEGORY
-    # ======================================
-
-    if not isinstance(
-        category,
-        discord.CategoryChannel
-    ):
-
-        return False, (
-            f"`{config['category_id']}` is not a category."
-        )
-
-
-    # ======================================
-    # MOVE CHANNEL
-    # ======================================
+    channel_name = (
+        f"{status}．{quantity}．{item}"
+    )
 
     try:
 
         await ticket.edit(
             name=channel_name,
             category=category,
-            reason=f"Order status changed to {status}"
+            reason=(
+                f"Order status changed "
+                f"to {status}"
+            )
         )
 
     except discord.Forbidden:
 
         return False, (
-            "I don't have permission to rename "
-            "or move the ticket channel.\n\n"
+            "I don't have permission to "
+            "rename or move the ticket channel.\n\n"
             "Please give the bot **Manage Channels**."
         )
 
     except discord.HTTPException as e:
 
         return False, (
-            f"Discord rejected the channel update:\n"
+            "Discord rejected the channel update:\n"
             f"`{e}`"
         )
 
@@ -231,216 +341,285 @@ async def move_ticket_channel(
 
 
 # ==========================================
-# STATUS DROPDOWN
+# UPDATE STATUS TEXT
 # ==========================================
 
-class QueueStatusSelection(discord.ui.Select):
+def update_status_text(
+    content: str,
+    status: str
+) -> str:
+
+    if not content:
+        return content
+
+    return re.sub(
+        r"(status\s*:\s*\*\*__)(.*?)(__\*\*)",
+        rf"\g<1>{status}\g<3>",
+        content,
+        flags=re.IGNORECASE
+    )
+
+
+# ==========================================
+# STATUS BUTTON
+# ==========================================
+
+class QueueStatusButton(
+    discord.ui.Button
+):
 
     def __init__(
         self,
-        ticket_channel_id,
-        quantity,
-        item
+        status: str,
+        label: str
     ):
 
-        self.ticket_channel_id = ticket_channel_id
-        self.quantity = quantity
-        self.item = item
-
-        options = [
-
-            discord.SelectOption(
-                label="．　processing",
-                value="processing",
-                emoji=EMOJI_PROCESSING
-            ),
-
-            discord.SelectOption(
-                label="．　completed",
-                value="completed",
-                emoji=EMOJI_COMPLETED
-            ),
-
-            discord.SelectOption(
-                label="．　cancelled",
-                value="cancelled",
-                emoji=EMOJI_CANCELLED
-            )
-        ]
-
         super().__init__(
-            placeholder="ONLY MEOWZ!",
-            min_values=1,
-            max_values=1,
-            options=options
+            label=label,
+            style=discord.ButtonStyle.secondary,
+            custom_id=f"queue_status_{status}"
         )
 
+        self.status = status
 
-    # ======================================
-    # CALLBACK
-    # ======================================
 
     async def callback(
         self,
         interaction: discord.Interaction
     ):
 
+        view = self.view
+
+        if not isinstance(
+            view,
+            QueueView
+        ):
+
+            await interaction.response.send_message(
+                "❌ Queue controls are unavailable.",
+                ephemeral=True
+            )
+
+            return
+
+        # ==================================
+        # STAFF CHECK
+        # ==================================
+
+        if not isinstance(
+            interaction.user,
+            discord.Member
+        ):
+
+            await interaction.response.send_message(
+                "❌ Staff only.",
+                ephemeral=True
+            )
+
+            return
+
+        if not is_staff(
+            interaction.user
+        ):
+
+            await interaction.response.send_message(
+                "❌ You do not have permission to "
+                "change order statuses.",
+                ephemeral=True
+            )
+
+            return
+
+        await view.handle_status(
+            interaction,
+            self.status
+        )
+
+
+# ==========================================
+# VIEW QUEUE BUTTON
+# ==========================================
+
+class ViewQueueButton(
+    discord.ui.Button
+):
+
+    def __init__(
+        self,
+        url: str
+    ):
+
+        super().__init__(
+            label="View Queue",
+            style=discord.ButtonStyle.link,
+            url=url
+        )
+
+
+# ==========================================
+# QUEUE VIEW
+# ==========================================
+
+class QueueView(
+    discord.ui.View
+):
+
+    def __init__(
+        self,
+        ticket_channel_id: int,
+        quantity: str,
+        item: str,
+        customer_id: int,
+        queue_url: str | None = None
+    ):
+
+        super().__init__(
+            timeout=None
+        )
+
+        self.ticket_channel_id = (
+            ticket_channel_id
+        )
+
+        self.quantity = quantity
+        self.item = item
+        self.customer_id = customer_id
+        self.queue_url = queue_url
+
+        # Prevent double-clicks
+        self.processing_status = False
+
+        # ==================================
+        # PROCESSING
+        # ==================================
+
+        self.add_item(
+            QueueStatusButton(
+                status="processing",
+                label="processing"
+            )
+        )
+
+        # ==================================
+        # COMPLETED
+        # ==================================
+
+        self.add_item(
+            QueueStatusButton(
+                status="completed",
+                label="completed"
+            )
+        )
+
+        # ==================================
+        # CANCELLED
+        # ==================================
+
+        self.add_item(
+            QueueStatusButton(
+                status="cancelled",
+                label="cancelled"
+            )
+        )
+
+        # ==================================
+        # VIEW QUEUE
+        # ==================================
+
+        if queue_url:
+
+            self.add_item(
+                ViewQueueButton(
+                    queue_url
+                )
+            )
+
+
+    # ==========================================
+    # HANDLE STATUS
+    # ==========================================
+
+    async def handle_status(
+        self,
+        interaction: discord.Interaction,
+        status: str
+    ):
+
+        print(
+            f"[QUEUE] Status selected: "
+            f"{status} | "
+            f"user={interaction.user} | "
+            f"id={interaction.user.id}"
+        )
+
+        # ==================================
+        # PREVENT DOUBLE CLICK
+        # ==================================
+
+        if self.processing_status:
+
+            await interaction.response.send_message(
+                "⚠️ This order is already being updated.",
+                ephemeral=True
+            )
+
+            return
+
+        self.processing_status = True
+
+        # ==================================
+        # ACKNOWLEDGE IMMEDIATELY
+        # ==================================
+
         try:
-
-            # ==================================
-            # GET STATUS
-            # ==================================
-
-            status = self.values[0]
-
-            print(
-                f"[QUEUE] Selected status: {status}"
-            )
-
-
-            # ==================================
-            # STATUS TEXT
-            # ==================================
-
-            status_text = {
-                "processing": "PROCESSING",
-                "completed": "COMPLETED",
-                "cancelled": "CANCELLED"
-            }
-
-            new_status = status_text.get(
-                status,
-                status.upper()
-            )
-
-
-            # ==================================
-            # IMMEDIATELY ACKNOWLEDGE
-            # ==================================
 
             await interaction.response.defer(
                 ephemeral=True
             )
 
+        except discord.HTTPException:
+
+            self.processing_status = False
+            return
+
+        try:
 
             # ==================================
-            # GET QUEUE EMBED
+            # GET TICKET
             # ==================================
 
-            if not interaction.message:
-
-                await interaction.followup.send(
-                    "❌ Queue message could not be found.",
-                    ephemeral=True
-                )
-
-                return
-
-
-            if not interaction.message.embeds:
-
-                await interaction.followup.send(
-                    "❌ No queue embed found.",
-                    ephemeral=True
-                )
-
-                return
-
-
-            # ==================================
-            # UPDATE QUEUE EMBED
-            # ==================================
-
-            embed = interaction.message.embeds[0]
-
-            if embed.description:
-
-                description = embed.description
-
-                description = description.replace(
-                    "STATUS: NOTED",
-                    f"STATUS: {new_status}"
-                )
-
-                description = description.replace(
-                    "STATUS: PROCESSING",
-                    f"STATUS: {new_status}"
-                )
-
-                description = description.replace(
-                    "STATUS: COMPLETED",
-                    f"STATUS: {new_status}"
-                )
-
-                description = description.replace(
-                    "STATUS: CANCELLED",
-                    f"STATUS: {new_status}"
-                )
-
-                embed.description = description
-
-
-            # ==================================
-            # GET ORIGINAL TICKET
-            # ==================================
-
-            ticket = interaction.client.get_channel(
+            ticket, error = await get_text_channel(
+                interaction.client,
                 self.ticket_channel_id
             )
 
             if ticket is None:
 
-                try:
+                await interaction.followup.send(
+                    f"❌ {error}",
+                    ephemeral=True
+                )
 
-                    ticket = await interaction.client.fetch_channel(
-                        self.ticket_channel_id
-                    )
-
-                except discord.NotFound:
-
-                    await interaction.followup.send(
-                        "❌ The ticket channel no longer exists.",
-                        ephemeral=True
-                    )
-
-                    return
-
-                except discord.Forbidden:
-
-                    await interaction.followup.send(
-                        "❌ I don't have permission to access the ticket channel.",
-                        ephemeral=True
-                    )
-
-                    return
-
-                except discord.HTTPException as e:
-
-                    await interaction.followup.send(
-                        f"❌ Failed to access ticket:\n`{e}`",
-                        ephemeral=True
-                    )
-
-                    return
-
+                return
 
             # ==================================
             # MOVE TICKET
             # ==================================
 
-            success, error = await move_ticket_channel(
-                interaction.client,
-                ticket,
-                status,
-                self.quantity,
-                self.item
+            success, error = (
+                await move_ticket_channel(
+                    interaction.client,
+                    ticket,
+                    status,
+                    self.quantity,
+                    self.item
+                )
             )
-
 
             if not success:
 
                 await interaction.followup.send(
-                    f"❌ Failed to move ticket.\n\n"
+                    "❌ Failed to move ticket.\n\n"
                     f"{error}",
                     ephemeral=True
                 )
@@ -448,148 +627,186 @@ class QueueStatusSelection(discord.ui.Select):
                 return
 
             # ==================================
-            # SEND STATUS MESSAGE
+            # CREATE STATUS MESSAGE
+            # ==================================
+
+            if status == "cancelled":
+
+                customer_mention = (
+                    f"<@{self.customer_id}>"
+                )
+
+                message = (
+                    "_ _\n"
+                    "_ _            order is cancelled.  "
+                    "<a:66cdf480:1531685109055361064>\n"
+                    f"_ _          丶 {customer_mention}\n"
+                    "\n"
+                    "_ _"
+                )
+
+            else:
+
+                message = STATUS_MESSAGES.get(
+                    status,
+                    "Order status updated."
+                )
+
+            # ==================================
+            # SEND STATUS TO TICKET
             # ==================================
 
             await ticket.send(
-                STATUS_CONFIG[status]["message"]
+                message
             )
-
 
             # ==================================
             # UPDATE QUEUE MESSAGE
             # ==================================
 
-            if status in ("completed", "cancelled"):
-                # REMOVE DROPDOWN
-                await interaction.message.edit(
-                    embed=embed,
-                    view=None
-                )
-            else:
-                # KEEP DROPDOWN FOR PROCESSING
-                await interaction.message.edit(
-                    embed=embed,
-                    view=self.view
+            queue_message = (
+                interaction.message
+            )
+
+            if queue_message:
+
+                content = (
+                    queue_message.content
                 )
 
+                # ==================================
+                # UPDATE STATUS TEXT
+                # ==================================
+
+                content = update_status_text(
+                    content,
+                    status
+                )
+
+                # ==================================
+                # COMPLETED / CANCELLED
+                # ==================================
+                #
+                # IMPORTANT:
+                # Edit CONTENT and remove VIEW
+                # at the same time.
+                #
+
+                if status in (
+                    "completed",
+                    "cancelled"
+                ):
+
+                    await queue_message.edit(
+                        content=content,
+                        view=None
+                    )
+
+                # ==================================
+                # PROCESSING
+                # ==================================
+
+                else:
+
+                    await queue_message.edit(
+                        content=content,
+                        view=self
+                    )
 
             # ==================================
             # SUCCESS
             # ==================================
 
+            new_status = STATUS_TEXT.get(
+                status,
+                status.upper()
+            )
+
             await interaction.followup.send(
-                f"status changed to **{new_status}**.\n"
-                f"ticket moved to **{ticket.name}**.",
+                f"status changed to "
+                f"**{new_status}**.\n"
+                f"ticket moved to "
+                f"**{ticket.name}**.",
                 ephemeral=True
             )
 
-        # ======================================
-        # ERROR HANDLER
-        # ======================================
+        # ==================================
+        # FORBIDDEN
+        # ==================================
 
         except discord.Forbidden as e:
 
             print(
-                f"[QUEUE ERROR - FORBIDDEN] {e}"
+                f"[QUEUE ERROR - FORBIDDEN] "
+                f"{e}"
             )
 
-            if interaction.response.is_done():
+            await interaction.followup.send(
+                "❌ Discord denied the bot's action.\n"
+                "Please check the bot's permissions.",
+                ephemeral=True
+            )
 
-                await interaction.followup.send(
-                    "❌ Discord denied the bot's action. "
-                    "Check the bot's permissions.",
-                    ephemeral=True
-                )
-
-            else:
-
-                await interaction.response.send_message(
-                    "❌ Discord denied the bot's action. "
-                    "Check the bot's permissions.",
-                    ephemeral=True
-                )
-
+        # ==================================
+        # HTTP ERROR
+        # ==================================
 
         except discord.HTTPException as e:
 
             print(
-                f"[QUEUE ERROR - HTTP] {e}"
+                f"[QUEUE ERROR - HTTP] "
+                f"{e}"
             )
 
-            if interaction.response.is_done():
+            try:
 
                 await interaction.followup.send(
-                    f"❌ Discord API error:\n`{e}`",
+                    "❌ Discord API error:\n"
+                    f"`{e}`",
                     ephemeral=True
                 )
 
-            else:
+            except discord.HTTPException:
+                pass
 
-                await interaction.response.send_message(
-                    f"❌ Discord API error:\n`{e}`",
-                    ephemeral=True
-                )
-
+        # ==================================
+        # UNKNOWN ERROR
+        # ==================================
 
         except Exception as e:
 
             print(
-                f"[QUEUE ERROR] {type(e).__name__}: {e}"
+                f"[QUEUE ERROR] "
+                f"{type(e).__name__}: {e}"
             )
 
-            if interaction.response.is_done():
+            try:
 
                 await interaction.followup.send(
-                    f"❌ Something went wrong:\n"
+                    "❌ Something went wrong:\n"
                     f"`{type(e).__name__}: {e}`",
                     ephemeral=True
                 )
 
-            else:
+            except discord.HTTPException:
+                pass
 
-                await interaction.response.send_message(
-                    f"❌ Something went wrong:\n"
-                    f"`{type(e).__name__}: {e}`",
-                    ephemeral=True
-                )
+        finally:
 
-
-# ==========================================
-# QUEUE VIEW
-# ==========================================
-
-class QueueView(discord.ui.View):
-
-    def __init__(
-        self,
-        ticket_channel_id,
-        quantity,
-        item
-    ):
-
-        super().__init__(
-            timeout=None
-        )
-
-        self.add_item(
-            QueueStatusSelection(
-                ticket_channel_id,
-                quantity,
-                item
-            )
-        )
+            self.processing_status = False
 
 
 # ==========================================
 # QUEUE COG
 # ==========================================
 
-class Queue(commands.Cog):
+class Queue(
+    commands.Cog
+):
 
     def __init__(
         self,
-        bot
+        bot: commands.Bot
     ):
 
         self.bot = bot
@@ -623,146 +840,79 @@ class Queue(commands.Cog):
     ):
 
         # ==================================
+        # ACKNOWLEDGE IMMEDIATELY
+        # ==================================
+
+        await interaction.response.defer()
+
+        # ==================================
         # ORIGINAL TICKET
         # ==================================
 
-        ticket_channel = interaction.channel
+        ticket_channel = (
+            interaction.channel
+        )
 
-        if ticket_channel is None:
+        if not isinstance(
+            ticket_channel,
+            discord.TextChannel
+        ):
 
-            await interaction.response.send_message(
-                "❌ Ticket channel could not be found.",
+            await interaction.followup.send(
+                "❌ This command must be used "
+                "inside a text channel.",
                 ephemeral=True
             )
 
             return
 
-        ticket_channel_id = ticket_channel.id
-
+        ticket_channel_id = (
+            ticket_channel.id
+        )
 
         # ==================================
         # GET QUEUE CHANNEL
         # ==================================
 
-        queue_channel = self.bot.get_channel(
-            QUEUE_CHANNEL_ID
+        queue_channel, error = (
+            await get_text_channel(
+                self.bot,
+                QUEUE_CHANNEL_ID
+            )
         )
 
         if queue_channel is None:
 
-            try:
-
-                queue_channel = await self.bot.fetch_channel(
-                    QUEUE_CHANNEL_ID
-                )
-
-            except discord.NotFound:
-
-                await interaction.response.send_message(
-                    f"❌ Queue channel does not exist.\n"
-                    f"ID: `{QUEUE_CHANNEL_ID}`",
-                    ephemeral=True
-                )
-
-                return
-
-            except discord.Forbidden:
-
-                await interaction.response.send_message(
-                    "❌ I don't have permission to access the queue channel.",
-                    ephemeral=True
-                )
-
-                return
-
-            except discord.HTTPException as e:
-
-                await interaction.response.send_message(
-                    f"❌ Failed to access queue channel: `{e}`",
-                    ephemeral=True
-                )
-
-                return
-
-
-        # ==================================
-        # CHECK QUEUE CHANNEL
-        # ==================================
-
-        if not isinstance(
-            queue_channel,
-            discord.TextChannel
-        ):
-
-            await interaction.response.send_message(
-                "❌ QUEUE_CHANNEL_ID is not a text channel.",
+            await interaction.followup.send(
+                "❌ Failed to access "
+                "queue channel.\n\n"
+                f"{error}",
                 ephemeral=True
             )
 
             return
-
 
         # ==================================
         # GET NOTED CATEGORY
         # ==================================
 
-        noted_category = self.bot.get_channel(
-            NOTED_CATEGORY_ID
+        noted_category, error = (
+            await get_category(
+                self.bot,
+                NOTED_CATEGORY_ID
+            )
         )
 
         if noted_category is None:
 
-            try:
-
-                noted_category = await self.bot.fetch_channel(
-                    NOTED_CATEGORY_ID
-                )
-
-            except discord.NotFound:
-
-                await interaction.response.send_message(
-                    f"❌ Noted category does not exist.\n"
-                    f"ID: `{NOTED_CATEGORY_ID}`",
-                    ephemeral=True
-                )
-
-                return
-
-            except discord.Forbidden:
-
-                await interaction.response.send_message(
-                    "❌ I don't have permission to access the Noted category.",
-                    ephemeral=True
-                )
-
-                return
-
-            except discord.HTTPException as e:
-
-                await interaction.response.send_message(
-                    f"❌ Failed to access Noted category: `{e}`",
-                    ephemeral=True
-                )
-
-                return
-
-
-        # ==================================
-        # CHECK NOTED CATEGORY
-        # ==================================
-
-        if not isinstance(
-            noted_category,
-            discord.CategoryChannel
-        ):
-
-            await interaction.response.send_message(
-                "❌ NOTED_CATEGORY_ID is not a category.",
+            await interaction.followup.send(
+                "❌ Failed to access "
+                "Noted category.\n\n"
+                f"{error}",
                 ephemeral=True
             )
 
             return
-
 
         # ==================================
         # MOVE TICKET TO NOTED
@@ -771,16 +921,21 @@ class Queue(commands.Cog):
         try:
 
             await ticket_channel.edit(
-                name=f"noted．{quantity}．{item}",
+                name=(
+                    f"noted．"
+                    f"{quantity}．"
+                    f"{item}"
+                ),
                 category=noted_category,
                 reason="New order queued"
             )
 
         except discord.Forbidden:
 
-            await interaction.response.send_message(
-                "❌ I don't have permission to rename "
-                "or move the ticket channel.",
+            await interaction.followup.send(
+                "❌ I don't have permission "
+                "to rename or move the "
+                "ticket channel.",
                 ephemeral=True
             )
 
@@ -788,46 +943,48 @@ class Queue(commands.Cog):
 
         except discord.HTTPException as e:
 
-            await interaction.response.send_message(
-                f"❌ Failed to move ticket channel: `{e}`",
+            await interaction.followup.send(
+                "❌ Failed to move "
+                "ticket channel:\n"
+                f"`{e}`",
                 ephemeral=True
             )
 
             return
 
-
         # ==================================
-        # CREATE QUEUE EMBED
+        # CREATE QUEUE VIEW
         # ==================================
 
-        embed = discord.Embed(
-
-            description=(
-
-                "_ _\n\n"
-
-                "_ _　　    　　　　<:apple_folder:1531585484256444567> "
-                "**TOMA GOT AN ORDER!**　　　　　　　　\n"
-
-                f"_ _　　   　　　　╰     <#{ticket_channel_id}>   𐔌\n"
-
-                f"_ _　　    　　　　ordered : {quantity}   - [ {item} ] "
-                "<:003_orangeslice:1531666035139280970>\n"
-
-                f"_ _　　   　 　　　paid via {mop} : ₱`{amount}.00`\n"
-
-                f"_ _　　　　　　ⓘ　　~~  ~~　　{interaction.user.mention}\n"
-
-                "\n"
-
-                "_ _　　　　　　　( ?  **STATUS: NOTED** )\n"
-
-                "\n"
-
-                "_ _"
-            )
+        view = QueueView(
+            ticket_channel_id=(
+                ticket_channel_id
+            ),
+            quantity=quantity,
+            item=item,
+            customer_id=user.id
         )
 
+        # ==================================
+        # QUEUE MESSAGE
+        # ==================================
+
+        queue_content = (
+            "_ _\n"
+            f"　　　　 ฅ  　 "
+            f"<#{ticket_channel_id}> \n"
+            f"　　　　 [ {quantity} ] 　"
+            f"{item} \n"
+            f"　　　　 via  {mop} — "
+            f"**₱ {amount}.00** \n"
+            f"　　　　 丶 status : "
+            f"**__noted__** \n"
+            f"　　　　"
+            f"<a:001_appletv:1531665532015611935>"
+            f"  :  {user.mention} \n"
+            "\n"
+            "_ _"
+        )
 
         # ==================================
         # SEND QUEUE MESSAGE
@@ -836,29 +993,16 @@ class Queue(commands.Cog):
         try:
 
             await queue_channel.send(
-
-                content=(
-
-                    "_ _\n"
-
-                    f"_ _  ⓘ   {user.mention}   ordered something !\n"
-
-                    "_ _"
-                ),
-
-                embed=embed,
-
-                view=QueueView(
-                    ticket_channel_id,
-                    quantity,
-                    item
-                )
+                content=queue_content,
+                view=view
             )
 
         except discord.Forbidden:
 
-            await interaction.response.send_message(
-                "❌ I found the queue channel, but I don't have permission to send messages there.",
+            await interaction.followup.send(
+                "❌ I found the queue channel, "
+                "but I don't have permission "
+                "to send messages there.",
                 ephemeral=True
             )
 
@@ -866,43 +1010,28 @@ class Queue(commands.Cog):
 
         except discord.HTTPException as e:
 
-            await interaction.response.send_message(
-                f"❌ Discord rejected the queue message: `{e}`",
+            await interaction.followup.send(
+                "❌ Discord rejected the "
+                "queue message:\n"
+                f"`{e}`",
                 ephemeral=True
             )
 
             return
 
-
         # ==================================
-        # NOTED CONFIRMATION
+        # CONFIRMATION
         # ==================================
 
-        await interaction.response.send_message(
-
+        await interaction.followup.send(
             (
-                "_ _\n\n"
-
-                "_ _      <a:ise_a2:1531670472155070465>    ~~                       ~~     "
-                "<a:004_2_carrot:1531669152199213269>    ~~                       ~~   "
-                "<a:004_2_carrot:1531669152199213269>\n"
-
-                "_ _   **noted                     processing               completed**\n\n"
-
-                "_ _       your order  is  "
-                "[queued](https://discord.com/channels/1412690271296163963/1551245952063377408) . "
-                "kindly  wait  until  we\n"
-
-                "_ _ process your order . you can check for  "
-                "[updates](https://discord.com/channels/1412690271296163963/1500685002671915239)\n"
-
-                "_ _ here. no rushing of orders, **thank you so much !**\n"
-
-                ">   pings   :     <@&1412724532623441941>  "
-                "<@&1442868959245504735> <@&1412762016753516614>\n\n"
-
+                "_ _\n"
+                "_ _           kiwi noted ur order.  "
+                "<a:f_inouestrawberry:1557076560391962744>\n"
+                f"_ _          丶 {user.mention}\n"
+                "\n"
                 "_ _"
-            ),
+            )
         )
 
 
@@ -910,7 +1039,9 @@ class Queue(commands.Cog):
 # SETUP
 # ==========================================
 
-async def setup(bot):
+async def setup(
+    bot: commands.Bot
+):
 
     await bot.add_cog(
         Queue(bot)
