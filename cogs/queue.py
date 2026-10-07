@@ -1,9 +1,9 @@
-
 import os
 import re
 import asyncio
 
 import discord
+
 from discord.ext import commands
 from discord import app_commands
 from dotenv import load_dotenv
@@ -39,6 +39,7 @@ COMPLETED_CATEGORY_ID = int(
 CANCELLED_CATEGORY_ID = int(
     os.getenv("CANCELLED_CATEGORY_ID", 0)
 )
+
 
 # ==========================================
 # STAFF ROLE
@@ -76,7 +77,7 @@ STATUS_MESSAGES = {
 
     "processing": (
         "_ _\n"
-        "            <a:002_PixelSprout:1531673663600853113>     ~~                     ~~   <a:ise_a2:1531670472155070465>    ~~                     ~~   <a:004_2_carrot:1531669152199213269> \n"
+        "            <a:002_PixelSprout:1531673663600853113>     ~~                     ~~   <a:ise_a2:1531670472155070465>    ~~                     ~~   <a:004_2_carrot:1531669152199213269>\n"
         "         noted                   processing             completed\n"
         "\n"
         "_ _         your [order](https://discord.com/channels/1412690271296163963/1551245952063377408) is being processed. no refunds\n"
@@ -89,7 +90,7 @@ STATUS_MESSAGES = {
 
     "completed": (
         "_ _\n"
-        "            <a:002_PixelSprout:1531673663600853113>     ~~                     ~~   <a:002_PixelSprout:1531673663600853113>     ~~                     ~~   <a:ise_a2:1531670472155070465>  \n"
+        "            <a:002_PixelSprout:1531673663600853113>     ~~                     ~~   <a:002_PixelSprout:1531673663600853113>     ~~                     ~~   <a:ise_a2:1531670472155070465>\n"
         "         noted                   processing             completed\n"
         "\n"
         "_ _         kiwi delivered your order! <@&1412724532623441941> kindly\n"
@@ -116,10 +117,6 @@ async def get_category(
     bot: commands.Bot,
     category_id: int
 ):
-    """
-    Get category from cache first.
-    Only call Discord API if it isn't cached.
-    """
 
     if not category_id:
 
@@ -128,7 +125,11 @@ async def get_category(
             f"ID: `{category_id}`"
         )
 
-    category = bot.get_channel(category_id)
+
+    category = bot.get_channel(
+        category_id
+    )
+
 
     if category is None:
 
@@ -159,6 +160,7 @@ async def get_category(
                 f"`{e}`"
             )
 
+
     if not isinstance(
         category,
         discord.CategoryChannel
@@ -167,6 +169,7 @@ async def get_category(
         return None, (
             f"`{category_id}` is not a category."
         )
+
 
     return category, None
 
@@ -179,9 +182,6 @@ async def get_text_channel(
     bot: commands.Bot,
     channel_id: int
 ):
-    """
-    Cache-first text channel lookup.
-    """
 
     if not channel_id:
 
@@ -189,7 +189,11 @@ async def get_text_channel(
             "Channel ID is not configured."
         )
 
-    channel = bot.get_channel(channel_id)
+
+    channel = bot.get_channel(
+        channel_id
+    )
+
 
     if channel is not None:
 
@@ -200,9 +204,11 @@ async def get_text_channel(
 
             return channel, None
 
+
         return None, (
             f"`{channel_id}` is not a text channel."
         )
+
 
     try:
 
@@ -230,6 +236,7 @@ async def get_text_channel(
             f"`{e}`"
         )
 
+
     if not isinstance(
         channel,
         discord.TextChannel
@@ -238,6 +245,7 @@ async def get_text_channel(
         return None, (
             "The channel is not a text channel."
         )
+
 
     return channel, None
 
@@ -249,28 +257,30 @@ async def get_text_channel(
 def is_staff(
     member: discord.Member
 ) -> bool:
-    """
-    Returns True when the user is:
-    - Server owner
-    - Administrator
-    - Has the configured staff role
-    """
 
     # Server owner
+
     if member.guild.owner_id == member.id:
+
         return True
+
 
     # Administrator
+
     if member.guild_permissions.administrator:
+
         return True
 
+
     # Staff role
+
     if STAFF_ROLE_ID:
 
         return any(
             role.id == STAFF_ROLE_ID
             for role in member.roles
         )
+
 
     return False
 
@@ -291,6 +301,7 @@ async def move_ticket_channel(
         status
     )
 
+
     if not category_id:
 
         return False, (
@@ -298,18 +309,22 @@ async def move_ticket_channel(
             f"`{status}`."
         )
 
+
     category, error = await get_category(
         bot,
         category_id
     )
 
+
     if category is None:
 
         return False, error
 
+
     channel_name = (
         f"{status}．{quantity}．{item}"
     )
+
 
     try:
 
@@ -322,6 +337,7 @@ async def move_ticket_channel(
             )
         )
 
+
     except discord.Forbidden:
 
         return False, (
@@ -330,12 +346,14 @@ async def move_ticket_channel(
             "Please give the bot **Manage Channels**."
         )
 
+
     except discord.HTTPException as e:
 
         return False, (
             "Discord rejected the channel update:\n"
             f"`{e}`"
         )
+
 
     return True, None
 
@@ -350,7 +368,9 @@ def update_status_text(
 ) -> str:
 
     if not content:
+
         return content
+
 
     return re.sub(
         r"(status\s*:\s*\*\*__)(.*?)(__\*\*)",
@@ -390,6 +410,7 @@ class QueueStatusButton(
 
         view = self.view
 
+
         if not isinstance(
             view,
             QueueView
@@ -401,6 +422,7 @@ class QueueStatusButton(
             )
 
             return
+
 
         # ==================================
         # STAFF CHECK
@@ -418,6 +440,7 @@ class QueueStatusButton(
 
             return
 
+
         if not is_staff(
             interaction.user
         ):
@@ -429,6 +452,7 @@ class QueueStatusButton(
             )
 
             return
+
 
         await view.handle_status(
             interaction,
@@ -450,7 +474,7 @@ class ViewQueueButton(
     ):
 
         super().__init__(
-            label="View Queue",
+            label="view order",
             style=discord.ButtonStyle.link,
             url=url
         )
@@ -469,13 +493,13 @@ class QueueView(
         ticket_channel_id: int,
         quantity: str,
         item: str,
-        customer_id: int,
-        queue_url: str | None = None
+        customer_id: int
     ):
 
         super().__init__(
             timeout=None
         )
+
 
         self.ticket_channel_id = (
             ticket_channel_id
@@ -484,10 +508,12 @@ class QueueView(
         self.quantity = quantity
         self.item = item
         self.customer_id = customer_id
-        self.queue_url = queue_url
+
 
         # Prevent double-clicks
+
         self.processing_status = False
+
 
         # ==================================
         # PROCESSING
@@ -500,6 +526,7 @@ class QueueView(
             )
         )
 
+
         # ==================================
         # COMPLETED
         # ==================================
@@ -511,6 +538,7 @@ class QueueView(
             )
         )
 
+
         # ==================================
         # CANCELLED
         # ==================================
@@ -521,18 +549,6 @@ class QueueView(
                 label="cancelled"
             )
         )
-
-        # ==================================
-        # VIEW QUEUE
-        # ==================================
-
-        if queue_url:
-
-            self.add_item(
-                ViewQueueButton(
-                    queue_url
-                )
-            )
 
 
     # ==========================================
@@ -552,6 +568,7 @@ class QueueView(
             f"id={interaction.user.id}"
         )
 
+
         # ==================================
         # PREVENT DOUBLE CLICK
         # ==================================
@@ -565,7 +582,9 @@ class QueueView(
 
             return
 
+
         self.processing_status = True
+
 
         # ==================================
         # ACKNOWLEDGE IMMEDIATELY
@@ -580,7 +599,9 @@ class QueueView(
         except discord.HTTPException:
 
             self.processing_status = False
+
             return
+
 
         try:
 
@@ -593,6 +614,7 @@ class QueueView(
                 self.ticket_channel_id
             )
 
+
             if ticket is None:
 
                 await interaction.followup.send(
@@ -601,6 +623,7 @@ class QueueView(
                 )
 
                 return
+
 
             # ==================================
             # MOVE TICKET
@@ -616,6 +639,7 @@ class QueueView(
                 )
             )
 
+
             if not success:
 
                 await interaction.followup.send(
@@ -625,6 +649,7 @@ class QueueView(
                 )
 
                 return
+
 
             # ==================================
             # CREATE STATUS MESSAGE
@@ -636,6 +661,7 @@ class QueueView(
                     f"<@{self.customer_id}>"
                 )
 
+
                 message = (
                     "_ _\n"
                     "_ _            order is cancelled.  "
@@ -645,12 +671,14 @@ class QueueView(
                     "_ _"
                 )
 
+
             else:
 
                 message = STATUS_MESSAGES.get(
                     status,
                     "Order status updated."
                 )
+
 
             # ==================================
             # SEND STATUS TO TICKET
@@ -660,6 +688,7 @@ class QueueView(
                 message
             )
 
+
             # ==================================
             # UPDATE QUEUE MESSAGE
             # ==================================
@@ -668,11 +697,13 @@ class QueueView(
                 interaction.message
             )
 
+
             if queue_message:
 
                 content = (
                     queue_message.content
                 )
+
 
                 # ==================================
                 # UPDATE STATUS TEXT
@@ -683,14 +714,10 @@ class QueueView(
                     status
                 )
 
+
                 # ==================================
                 # COMPLETED / CANCELLED
                 # ==================================
-                #
-                # IMPORTANT:
-                # Edit CONTENT and remove VIEW
-                # at the same time.
-                #
 
                 if status in (
                     "completed",
@@ -701,6 +728,7 @@ class QueueView(
                         content=content,
                         view=None
                     )
+
 
                 # ==================================
                 # PROCESSING
@@ -713,6 +741,7 @@ class QueueView(
                         view=self
                     )
 
+
             # ==================================
             # SUCCESS
             # ==================================
@@ -722,6 +751,7 @@ class QueueView(
                 status.upper()
             )
 
+
             await interaction.followup.send(
                 f"status changed to "
                 f"**{new_status}**.\n"
@@ -729,6 +759,7 @@ class QueueView(
                 f"**{ticket.name}**.",
                 ephemeral=True
             )
+
 
         # ==================================
         # FORBIDDEN
@@ -741,11 +772,19 @@ class QueueView(
                 f"{e}"
             )
 
-            await interaction.followup.send(
-                "❌ Discord denied the bot's action.\n"
-                "Please check the bot's permissions.",
-                ephemeral=True
-            )
+
+            try:
+
+                await interaction.followup.send(
+                    "❌ Discord denied the bot's action.\n"
+                    "Please check the bot's permissions.",
+                    ephemeral=True
+                )
+
+            except discord.HTTPException:
+
+                pass
+
 
         # ==================================
         # HTTP ERROR
@@ -758,6 +797,7 @@ class QueueView(
                 f"{e}"
             )
 
+
             try:
 
                 await interaction.followup.send(
@@ -767,7 +807,9 @@ class QueueView(
                 )
 
             except discord.HTTPException:
+
                 pass
+
 
         # ==================================
         # UNKNOWN ERROR
@@ -780,6 +822,7 @@ class QueueView(
                 f"{type(e).__name__}: {e}"
             )
 
+
             try:
 
                 await interaction.followup.send(
@@ -789,7 +832,9 @@ class QueueView(
                 )
 
             except discord.HTTPException:
+
                 pass
+
 
         finally:
 
@@ -845,6 +890,7 @@ class Queue(
 
         await interaction.response.defer()
 
+
         # ==================================
         # ORIGINAL TICKET
         # ==================================
@@ -852,6 +898,7 @@ class Queue(
         ticket_channel = (
             interaction.channel
         )
+
 
         if not isinstance(
             ticket_channel,
@@ -866,9 +913,11 @@ class Queue(
 
             return
 
+
         ticket_channel_id = (
             ticket_channel.id
         )
+
 
         # ==================================
         # GET QUEUE CHANNEL
@@ -881,6 +930,7 @@ class Queue(
             )
         )
 
+
         if queue_channel is None:
 
             await interaction.followup.send(
@@ -891,6 +941,7 @@ class Queue(
             )
 
             return
+
 
         # ==================================
         # GET NOTED CATEGORY
@@ -903,6 +954,7 @@ class Queue(
             )
         )
 
+
         if noted_category is None:
 
             await interaction.followup.send(
@@ -913,6 +965,7 @@ class Queue(
             )
 
             return
+
 
         # ==================================
         # MOVE TICKET TO NOTED
@@ -930,6 +983,7 @@ class Queue(
                 reason="New order queued"
             )
 
+
         except discord.Forbidden:
 
             await interaction.followup.send(
@@ -941,6 +995,7 @@ class Queue(
 
             return
 
+
         except discord.HTTPException as e:
 
             await interaction.followup.send(
@@ -951,6 +1006,7 @@ class Queue(
             )
 
             return
+
 
         # ==================================
         # CREATE QUEUE VIEW
@@ -964,6 +1020,7 @@ class Queue(
             item=item,
             customer_id=user.id
         )
+
 
         # ==================================
         # QUEUE MESSAGE
@@ -986,6 +1043,7 @@ class Queue(
             "_ _"
         )
 
+
         # ==================================
         # SEND QUEUE MESSAGE
         # ==================================
@@ -996,6 +1054,7 @@ class Queue(
                 content=queue_content,
                 view=view
             )
+
 
         except discord.Forbidden:
 
@@ -1008,6 +1067,7 @@ class Queue(
 
             return
 
+
         except discord.HTTPException as e:
 
             await interaction.followup.send(
@@ -1019,6 +1079,30 @@ class Queue(
 
             return
 
+
+        # ==================================
+        # CREATE VIEW QUEUE LINK
+        # ==================================
+
+        queue_url = (
+            f"https://discord.com/channels/"
+            f"{interaction.guild.id}/"
+            f"{QUEUE_CHANNEL_ID}"
+        )
+
+
+        confirmation_view = discord.ui.View(
+            timeout=None
+        )
+
+
+        confirmation_view.add_item(
+            ViewQueueButton(
+                queue_url
+            )
+        )
+
+
         # ==================================
         # CONFIRMATION
         # ==================================
@@ -1029,9 +1113,9 @@ class Queue(
                 "_ _           kiwi noted ur order.  "
                 "<a:f_inouestrawberry:1557076560391962744>\n"
                 f"_ _          丶 {user.mention}\n"
-                "\n"
                 "_ _"
-            )
+            ),
+            view=confirmation_view
         )
 
 
