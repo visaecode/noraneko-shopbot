@@ -1,7 +1,7 @@
 {
-    "status": "open",
+    "status": "closed",
     "manual_override": false,
-    "status_message_id": 1557973088560226356,
-    "last_automatic_state": "open",
-    "last_announcement_date": "2026-10-09"
+    "status_message_id": 1568263775046598677,
+    "last_automatic_state": "closed",
+    "last_announcement_date": "2026-11-06"
 }

@@ -1,0 +1,19 @@
+
+{
+  "queue": "_ _\n　　　　 ฅ  　 <#{ticket_channel_id}>\n　　　　 [ {quantity} ] 　{item}\n　　　　 via  {mop} — **₱ {amount}.00**\n　　　　 丶 status : **__noted__**\n　　　　<a:001_appletv:1531665532015611935>  :  {customer}\n\n_ _",
+
+  "confirmation": "_ _\n_ _           kiwi noted ur order.  <a:f_inouestrawberry:1557076560391962744>\n_ _          丶 {customer}\n_ _",
+
+  "processing": "_ _\n            <a:002_PixelSprout:1531673663600853113>     ~~                     ~~   <a:ise_a2:1531670472155070465>    ~~                     ~~   <a:004_2_carrot:1531669152199213269>\n         noted                   processing             completed\n\n_ _         your [order](https://discord.com/channels/1412690271296163963/1551245952063377408) is being processed. no refunds\n_ _         once we're processing your order. thank uu\n_ _         for more [inquiries](https://discord.com/channels/1412690271296163963/1444282982746554378) ping the <@&1442868959245504735> and\n_ _         wait for our response.\n\n_ _",
+
+  "completed": "_ _\n            <a:002_PixelSprout:1531673663600853113>     ~~                     ~~   <a:002_PixelSprout:1531673663600853113>     ~~                     ~~   <a:ise_a2:1531670472155070465>\n         noted                   processing             completed\n\n_ _         kiwi delivered your order! <@&1412724532623441941> kindly\n_ _         [vouch](https://discord.com/channels/1412690271296163963/1444005812828901498) us and also leave a [feedback](https://discord.com/channels/1412690271296163963/1522878467979477032) here. ty\n_ _         for ordering @ noraneko ! see u in your next\n_ _         purchase.\n\n_ _",
+
+  "cancelled": "_ _\n_ _            order is cancelled.  <a:66cdf480:1531685109055361064>\n_ _            丶 {customer}\n\n_ _",
+
+  "errors": {
+    "not_staff": "❌ You do not have permission to use this command.",
+    "not_text_channel": "❌ This command must be used inside a text channel.",
+    "already_finalized": "⚠️ This order has already been finalized.",
+    "already_updating": "⚠️ This order is already being updated."
+  }
+}

@@ -10,9 +10,6 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-# =========================================================
-# CONFIG
-# =========================================================
 
 TIMEZONE = ZoneInfo("Asia/Manila")
 
@@ -20,7 +17,6 @@ SHOP_STATUS_CHANNEL_ID = int(
     os.getenv("SHOP_STATUS_CHANNEL_ID", "0")
 )
 
-# Link used by the button
 SHOP_ORDER_URL = os.getenv(
     "SHOP_ORDER_URL",
     "https://discord.com/channels/1412690271296163963/1503647974062952549"

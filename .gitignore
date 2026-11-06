@@ -1,5 +1,36 @@
+# Environment / secrets
 .env
+.env.*
+!.env.example
+cookies.txt
+
+# Bot runtime data
+stickynotes.json
+autoresponders.json
+vanity.json
+
+
+# Python
 __pycache__/
-*.pyc
+*.py[cod]
 .venv/
 venv/
+env/
+*.egg-info/
+
+# Logs
+*.log
+
+# Editors
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+data/
+stickynotes.json
+autoresponders.json
+active_stickies.json
+vanity.json
