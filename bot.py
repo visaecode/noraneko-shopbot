@@ -9,10 +9,6 @@ load_dotenv()
 TOKEN = os.getenv("DISCORD_TOKEN")
 QUEUE_CHANNEL_ID = int(os.getenv("QUEUE_CHANNEL_ID"))
 
-# ---------
-# MAIN SETUP
-# ---------
-
 intents = discord.Intents.default()
 intents.members = True
 intents.message_content = True
@@ -26,7 +22,7 @@ async def load_extension():
 
     await bot.load_extension("cogs.queue")
     await bot.load_extension("cogs.status")
-    # await bot.load_extension("cogs.tickets")
+    await bot.load_extension("cogs.balance")
 
 @bot.event
 async def on_ready():

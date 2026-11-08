@@ -30,7 +30,5 @@ env/
 Thumbs.db
 
 data/
-stickynotes.json
-autoresponders.json
 active_stickies.json
 vanity.json

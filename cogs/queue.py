@@ -15,13 +15,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-
-# ==========================================
-# CONFIG
-# ==========================================
-
 QUEUE_CHANNEL_ID = int(os.getenv("QUEUE_CHANNEL_ID", 0))
-
 NOTED_CATEGORY_ID = int(os.getenv("NOTED_CATEGORY_ID", 0))
 PROCESSING_CATEGORY_ID = int(os.getenv("PROCESSING_CATEGORY_ID", 0))
 COMPLETED_CATEGORY_ID = int(os.getenv("COMPLETED_CATEGORY_ID", 0))
@@ -29,10 +23,6 @@ CANCELLED_CATEGORY_ID = int(os.getenv("CANCELLED_CATEGORY_ID", 0))
 
 STAFF_ROLE_ID = int(os.getenv("STAFF_ROLE_ID", 0))
 
-
-# ==========================================
-# FILE PATHS
-# ==========================================
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -43,11 +33,6 @@ DATA_DIR.mkdir(parents=True, exist_ok=True)
 
 DB_PATH = DATA_DIR / "queue.db"
 MESSAGE_PATH = MESSAGE_DIR / "queue_messages.json"
-
-
-# ==========================================
-# CONSTANTS
-# ==========================================
 
 STATUS_TEXT = {
     "noted": "NOTED",
@@ -63,22 +48,12 @@ CATEGORY_IDS = {
     "cancelled": CANCELLED_CATEGORY_ID
 }
 
-
-# ==========================================
-# LOAD JSON MESSAGES
-# ==========================================
-
 with open(MESSAGE_PATH, "r", encoding="utf-8") as file:
     MESSAGES = json.load(file)
 
 
 def get_message(key: str, **kwargs) -> str:
     return MESSAGES[key].format(**kwargs)
-
-
-# ==========================================
-# DATABASE
-# ==========================================
 
 def init_database():
 
@@ -159,12 +134,10 @@ def update_order_status(
         ))
 
         db.commit()
-
         return cursor.rowcount > 0
 
 
 def get_saved_orders():
-
     with sqlite3.connect(DB_PATH) as db:
 
         db.row_factory = sqlite3.Row
@@ -174,12 +147,7 @@ def get_saved_orders():
             FROM orders
             ORDER BY created_at ASC
         """).fetchall()
-
-
-# ==========================================
-# GET CATEGORY
-# ==========================================
-
+    
 async def get_category(
     bot: commands.Bot,
     category_id: int
@@ -208,11 +176,6 @@ async def get_category(
         return None, "The specified ID is not a category."
 
     return category, None
-
-
-# ==========================================
-# GET TEXT CHANNEL
-# ==========================================
 
 async def get_text_channel(
     bot: commands.Bot,
@@ -248,11 +211,6 @@ async def get_text_channel(
 
     return channel, None
 
-
-# ==========================================
-# STAFF CHECK
-# ==========================================
-
 def is_staff(member: discord.Member) -> bool:
 
     if member.guild.owner_id == member.id:
@@ -268,11 +226,6 @@ def is_staff(member: discord.Member) -> bool:
         )
 
     return False
-
-
-# ==========================================
-# MOVE TICKET CHANNEL
-# ==========================================
 
 async def move_ticket_channel(
     bot: commands.Bot,
@@ -319,11 +272,6 @@ async def move_ticket_channel(
 
     return True, None
 
-
-# ==========================================
-# UPDATE STATUS TEXT
-# ==========================================
-
 def update_status_text(
     content: str,
     status: str
@@ -338,11 +286,6 @@ def update_status_text(
         count=1,
         flags=re.IGNORECASE
     )
-
-
-# ==========================================
-# STATUS BUTTON
-# ==========================================
 
 class QueueStatusButton(discord.ui.Button):
 
@@ -396,11 +339,6 @@ class QueueStatusButton(discord.ui.Button):
             self.status
         )
 
-
-# ==========================================
-# VIEW QUEUE BUTTON
-# ==========================================
-
 class ViewQueueButton(discord.ui.Button):
 
     def __init__(self, url: str):
@@ -410,11 +348,6 @@ class ViewQueueButton(discord.ui.Button):
             style=discord.ButtonStyle.link,
             url=url
         )
-
-
-# ==========================================
-# QUEUE VIEW
-# ==========================================
 
 class QueueView(discord.ui.View):
 
@@ -466,10 +399,6 @@ class QueueView(discord.ui.View):
             for button in self.children:
                 button.disabled = True
 
-    # ======================================
-    # HANDLE STATUS
-    # ======================================
-
     async def handle_status(
         self,
         interaction: discord.Interaction,
@@ -508,10 +437,6 @@ class QueueView(discord.ui.View):
                 ephemeral=True
             )
 
-            # ==================================
-            # GET TICKET
-            # ==================================
-
             ticket, error = await get_text_channel(
                 interaction.client,
                 self.ticket_channel_id
@@ -525,9 +450,6 @@ class QueueView(discord.ui.View):
                 )
                 return
 
-            # ==================================
-            # MOVE TICKET
-            # ==================================
 
             success, error = await move_ticket_channel(
                 interaction.client,
@@ -545,9 +467,6 @@ class QueueView(discord.ui.View):
                 )
                 return
 
-            # ==================================
-            # SEND STATUS MESSAGE
-            # ==================================
 
             message = get_message(
                 status,
@@ -555,10 +474,6 @@ class QueueView(discord.ui.View):
             )
 
             await ticket.send(message)
-
-            # ==================================
-            # UPDATE QUEUE MESSAGE
-            # ==================================
 
             queue_message = interaction.message
 
@@ -569,7 +484,7 @@ class QueueView(discord.ui.View):
                     status
                 )
 
-                # Disable buttons on final statuses
+                # disable buttons 
                 if status in ("completed", "cancelled"):
 
                     for button in self.children:
@@ -580,20 +495,12 @@ class QueueView(discord.ui.View):
                     view=self
                 )
 
-            # ==================================
-            # SAVE STATUS TO DATABASE
-            # ==================================
-
             self.status = status
 
             update_order_status(
                 self.queue_message_id,
                 status
             )
-
-            # ==================================
-            # CONFIRMATION
-            # ==================================
 
             new_status = STATUS_TEXT.get(
                 status,
@@ -647,20 +554,11 @@ class QueueView(discord.ui.View):
 
             self.processing_status = False
 
-
-# ==========================================
-# QUEUE COG
-# ==========================================
-
 class Queue(commands.Cog):
 
     def __init__(self, bot: commands.Bot):
 
         self.bot = bot
-
-    # ======================================
-    # QUEUE COMMAND
-    # ======================================
 
     @app_commands.command(
         name="queue",
@@ -687,10 +585,6 @@ class Queue(commands.Cog):
 
         await interaction.response.defer()
 
-        # ==================================
-        # CHECK GUILD
-        # ==================================
-
         if interaction.guild is None:
 
             await interaction.followup.send(
@@ -699,9 +593,6 @@ class Queue(commands.Cog):
             )
             return
 
-        # ==================================
-        # CHECK STAFF
-        # ==================================
 
         if not isinstance(interaction.user, discord.Member):
             return
@@ -714,9 +605,6 @@ class Queue(commands.Cog):
             )
             return
 
-        # ==================================
-        # ORIGINAL TICKET
-        # ==================================
 
         ticket_channel = interaction.channel
 
@@ -730,10 +618,6 @@ class Queue(commands.Cog):
 
         ticket_channel_id = ticket_channel.id
 
-        # ==================================
-        # GET QUEUE CHANNEL
-        # ==================================
-
         queue_channel, error = await get_text_channel(
             self.bot,
             QUEUE_CHANNEL_ID
@@ -746,11 +630,7 @@ class Queue(commands.Cog):
                 ephemeral=True
             )
             return
-
-        # ==================================
-        # GET NOTED CATEGORY
-        # ==================================
-
+    
         noted_category, error = await get_category(
             self.bot,
             NOTED_CATEGORY_ID
@@ -763,10 +643,7 @@ class Queue(commands.Cog):
                 ephemeral=True
             )
             return
-
-        # ==================================
-        # MOVE TICKET TO NOTED
-        # ==================================
+        
 
         try:
 
@@ -791,10 +668,7 @@ class Queue(commands.Cog):
                 ephemeral=True
             )
             return
-
-        # ==================================
-        # CREATE QUEUE VIEW
-        # ==================================
+        
 
         view = QueueView(
             ticket_channel_id=ticket_channel_id,
@@ -803,9 +677,6 @@ class Queue(commands.Cog):
             customer_id=user.id
         )
 
-        # ==================================
-        # CREATE QUEUE MESSAGE
-        # ==================================
 
         queue_content = get_message(
             "queue",
@@ -817,9 +688,6 @@ class Queue(commands.Cog):
             customer=user.mention
         )
 
-        # ==================================
-        # SEND QUEUE MESSAGE
-        # ==================================
 
         try:
 
@@ -868,7 +736,8 @@ class Queue(commands.Cog):
         queue_url = (
             f"https://discord.com/channels/"
             f"{interaction.guild.id}/"
-            f"{QUEUE_CHANNEL_ID}"
+            f"{QUEUE_CHANNEL_ID}/"
+            f"{queue_message.id}"
         )
 
         confirmation_view = discord.ui.View(
