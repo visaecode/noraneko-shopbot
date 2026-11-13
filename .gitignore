@@ -2,16 +2,6 @@
 !README.md
 !.gitignore
 
-.cogs/
-.messages/
-
-.txt
-.json
-.py
-
-messages/
-cogs/
-
 # secrets
 .env
 .env.*
