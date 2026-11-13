@@ -2,13 +2,11 @@
 !README.md
 !.gitignore
 
-# secrets
 .env
 .env.*
 !.env.example
 cookies.txt
 
-# bot runtime data
 stickynotes.json
 autoresponders.json
 vanity.json
@@ -21,7 +19,6 @@ venv/
 env/
 *.egg-info/
 
-# Logs
 *.log
 
 .vscode/
