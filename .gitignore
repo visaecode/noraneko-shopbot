@@ -2,6 +2,14 @@
 !README.md
 !.gitignore
 
+.cogs/
+.messages/
+
+/bot.py
+/shop_status.json
+/requirements.txt
+/queue.txt
+
 # secrets
 .env
 .env.*
