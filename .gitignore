@@ -5,10 +5,12 @@
 .cogs/
 .messages/
 
-/bot.py
-/shop_status.json
-/requirements.txt
-/queue.txt
+.txt
+.json
+.py
+
+messages/
+cogs/
 
 # secrets
 .env
