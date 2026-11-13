@@ -13,10 +13,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 
-# ==========================================
-# CONFIG
-# ==========================================
-
+# config
 STAFF_ROLE_ID = int(os.getenv("STAFF_ROLE_ID", 0))
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -31,18 +28,12 @@ DB_PATH = DATA_DIR / "balance.db"
 MESSAGE_PATH = MESSAGE_DIR / "balance_messages.json"
 
 
-# ==========================================
-# LOAD JSON
-# ==========================================
-
+# load json
 with open(MESSAGE_PATH, "r", encoding="utf-8") as file:
     MESSAGES = json.load(file)
 
 
-# ==========================================
-# EMBED BUILDER
-# ==========================================
-
+# embed builder
 def create_embed(key: str, **kwargs):
 
     config = MESSAGES[key]
@@ -69,10 +60,7 @@ def create_embed(key: str, **kwargs):
     return embed
 
 
-# ==========================================
-# DATABASE
-# ==========================================
-
+# database
 def get_db():
 
     db = sqlite3.connect(DB_PATH, timeout=30)
@@ -132,10 +120,8 @@ def init_database():
     print("[BALANCE] Database initialized.")
 
 
-# ==========================================
-# STAFF CHECK
-# ==========================================
 
+# staff check
 def is_staff(member: discord.Member) -> bool:
 
     if member.guild.owner_id == member.id:
@@ -154,10 +140,7 @@ def is_staff(member: discord.Member) -> bool:
     return False
 
 
-# ==========================================
-# GET BALANCE
-# ==========================================
-
+# get balance
 def get_balance(user_id: int):
 
     with closing(get_db()) as db:
@@ -181,10 +164,7 @@ def get_balance(user_id: int):
         }
 
 
-# ==========================================
-# ADD BALANCE
-# ==========================================
-
+# add balance
 def add_balance(
     user_id: int,
     staff_id: int,
@@ -256,10 +236,7 @@ def add_balance(
             db.rollback()
             raise
 
-
-# ==========================================
-# DEDUCT BALANCE
-# ==========================================
+# deduct balance
 
 def deduct_balance(
     user_id: int,
@@ -519,7 +496,7 @@ class Balance(commands.Cog):
 
     @app_commands.command(
         name="leaderboard",
-        description="Display the top 10 users by balance."
+        description="display the top users with the highest balance."
     )
 
     async def leaderboard(

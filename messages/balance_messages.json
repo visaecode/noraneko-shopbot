@@ -27,15 +27,12 @@
     ]
   },
 
-  "leaderboard": {
-    "title": "Noraneko Balance Leaderboard",
-    "description": "Top 10 users ranked by available balance.\n\n{entries}",
-    "color": 16766720
-  },
+  "leaderboard": "Balance Leaderboard:\n\n {entries}\n",
+
 
   "errors": {
-    "not_staff": "❌ You do not have permission to use this command.",
-    "insufficient_balance": "❌ Insufficient balance!\n\nUser: {user}\nAvailable: ₱{balance}.00\nAttempted deduction: ₱{amount}.00",
+    "not_staff": "you do not have permission to use this command.",
+    "insufficient_balance": "insufficient balance!\n\nUser: {user}\nAvailable: ₱{balance}.00\nAttempted deduction: ₱{amount}.00",
     "empty_leaderboard": "There are currently no users on the leaderboard.",
     "database_error": "❌ A database error occurred. Please try again.",
     "leaderboard_error": "❌ Failed to retrieve leaderboard."

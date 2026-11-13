@@ -1,16 +1,19 @@
-# Environment / secrets
+*
+!README.md
+!.gitignore
+
+# secrets
 .env
 .env.*
 !.env.example
 cookies.txt
 
-# Bot runtime data
+# bot runtime data
 stickynotes.json
 autoresponders.json
 vanity.json
 
 
-# Python
 __pycache__/
 *.py[cod]
 .venv/
@@ -21,11 +24,9 @@ env/
 # Logs
 *.log
 
-# Editors
 .vscode/
 .idea/
 
-# OS
 .DS_Store
 Thumbs.db
 
